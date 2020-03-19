@@ -1,26 +1,36 @@
-#include <iostream>
+#include<iostream>
 #include "./config.cpp"
+#include <cmath>
+#include<stdlib.h>
 using namespace std;
 
 struct State {
-    int main_array[3][3];
+    char main_array[BOARD_SIZE][BOARD_SIZE];
     bool curr_player;
     _location curr_pos;
     bool game_over;
 };
+State state;
 
-State initialState = {
-    {
-        {EMPTY_MARKER, EMPTY_MARKER, EMPTY_MARKER},
-        {EMPTY_MARKER, EMPTY_MARKER, EMPTY_MARKER},
-        {EMPTY_MARKER, EMPTY_MARKER, EMPTY_MARKER},
-    },
-    0,
-    {0, 0},
-    false,
-};
+//fill initial state array
+void fill_array(char arr[][BOARD_SIZE], char marker){
+    for(int i=0; i<BOARD_SIZE; i++)
+        {
+            for(int j=0; j<BOARD_SIZE; j++)
+            {
+                arr[i][j]=marker;
+            }
 
-State state = initialState;
+        }
+}
+
+void init(){
+    setConsoleDimensions(WINDOW_SIZE.x, WINDOW_SIZE.y);
+    setConsoleScrollBarVisibility(false);
+    cursorVisAndSize(false);
+    enableConsoleResize(false);
+    setBgClr(BG_CLR, true);
+}
 
 
 char GetArrowKeysInput()
@@ -44,38 +54,37 @@ char GetArrowKeysInput()
 }
 
 void renderBoard(){
-setBgClr(BG_CLR);
-int line1y1 = START_POS.y - (BOARD_LINE_LENGTH.y/2 - BOARD_LINE_THICKNESS.y)/2 - BOARD_LINE_THICKNESS.y;
-int line1y2 = line1y1 + BOARD_LINE_THICKNESS.y;
-int line1x1 = START_POS.x - BOARD_LINE_LENGTH.x/2;
-int line1x2 = START_POS.x + BOARD_LINE_LENGTH.x/2;
-clrdLine(BOARD_CLR, line1x1, line1y1, line1x2, line1y2);
+    for(int i=0; i<BOARD_SIZE+1 ; i++)
+    {
+        //horizontal line
+        int lhy1 = START_POS.y - LINE_GAP.y/2 - (BOARD_SIZE/2 - i)*LINE_GAP.y - (BOARD_SIZE/2 + 1 - i)*BOARD_LINE_THICKNESS.y;
+        int lhy2 = lhy1 + BOARD_LINE_THICKNESS.y;
+        int lhx1 = START_POS.x - LINE_GAP.x/2 - (BOARD_SIZE/2)*LINE_GAP.x - (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.x;
+        int lhx2 = START_POS.x + LINE_GAP.x/2 + (BOARD_SIZE/2)*LINE_GAP.x + (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.x;
+        clrdLine(BOARD_CLR, lhx1, lhy1, lhx2, lhy2);
 
-int line2y1 = START_POS.y + (BOARD_LINE_LENGTH.y/2 - BOARD_LINE_THICKNESS.y)/2 - BOARD_LINE_THICKNESS.y;
-int line2y2 = line2y1 + BOARD_LINE_THICKNESS.y;
-clrdLine(BOARD_CLR,line1x1,line2y1,line1x2,line2y2);
-
-int line3y1 = START_POS.y - BOARD_LINE_LENGTH.y/2;
-int line3y2 = line3y1 + BOARD_LINE_LENGTH.y;
-int line3x1 = START_POS.x - (BOARD_LINE_LENGTH.x/2 - BOARD_LINE_THICKNESS.x)/2 - BOARD_LINE_THICKNESS.x;
-int line3x2 = line3x1 + BOARD_LINE_THICKNESS.x;
-clrdLine(BOARD_CLR,line3x1,line3y1,line3x2,line3y2);
-
-int line4x1 = START_POS.x + (BOARD_LINE_LENGTH.x/2 - BOARD_LINE_THICKNESS.x)/2 - BOARD_LINE_THICKNESS.x;
-int line4x2 = line4x1 + BOARD_LINE_THICKNESS.x;
-clrdLine(BOARD_CLR,line4x1,line3y1,line4x2,line3y2);
+        //vertical line
+        int lvy1 = START_POS.y - LINE_GAP.y/2 - (BOARD_SIZE/2)*LINE_GAP.y - (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.y;
+        int lvy2 = START_POS.y + ceil(LINE_GAP.y/2.0) + (BOARD_SIZE/2)*LINE_GAP.y + (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.y;
+        int lvx1 = START_POS.x - LINE_GAP.x/2 - (BOARD_SIZE/2 - i)*LINE_GAP.x - (BOARD_SIZE/2 + 1 - i)*BOARD_LINE_THICKNESS.x;
+        int lvx2 = lvx1 + BOARD_LINE_THICKNESS.x;
+        clrdLine(BOARD_CLR, lvx1, lvy1, lvx2, lvy2);
+    }
 }
 
 void printMarkerOnBoard(char marker, int x, int y){
-    _location start = {START_POS.x - TEXT_OFFSET.x, START_POS.y - TEXT_OFFSET.y};
-    Locate(start.x + x*TEXT_OFFSET.x, start.y + y*TEXT_OFFSET.y);
+    int factor = BOARD_SIZE/2;
+    _location offset = {LINE_GAP.x + BOARD_LINE_THICKNESS.x, LINE_GAP.y + BOARD_LINE_THICKNESS.y};
+    _location start = {START_POS.x - factor*offset.x, START_POS.y - factor*offset.y};
+
+    Locate(start.x + x*offset.x, start.y + y*offset.y);
     cout << marker;
 }
 
 void stateArray2Board()
 {
-    for(int r=0; r<3; ++r){
-        for(int c=0; c<3; ++c){
+    for(int r=0; r<BOARD_SIZE; ++r){
+        for(int c=0; c<BOARD_SIZE; ++c){
             printMarkerOnBoard(state.main_array[r][c], c, r);
         }
     }
@@ -92,7 +101,7 @@ char getCurrMarker(bool currPlayer){
     }
 }
 
-void gameLogic(int row=3, int col=3){
+void gameLogic(int row=BOARD_SIZE, int col=BOARD_SIZE){
     bool isDrawn = true;
 
     //for rows
@@ -178,26 +187,16 @@ void gameLogic(int row=3, int col=3){
     state.curr_player= !state.curr_player;
 }
 
-void printArr(){
-    Locate(0, 0);
-    for(int i=0; i<3; ++i){
-        for(int j=0; j<3; ++j){
-            cout << (char)state.main_array[i][j] << " ";
-        }
-        cout << endl;
-    }
-}
-
 void getUserMove()
 {
     char Input=GetArrowKeysInput();
     if(Input=='U' && state.curr_pos.y > 0)
         state.curr_pos.y--;
-    else if(Input=='D' && state.curr_pos.y < 2)
+    else if(Input=='D' && state.curr_pos.y < BOARD_SIZE-1)
         state.curr_pos.y++;
     else if(Input=='L' && state.curr_pos.x > 0)
         state.curr_pos.x--;
-    else if(Input=='R' && state.curr_pos.x < 2)
+    else if(Input=='R' && state.curr_pos.x < BOARD_SIZE-1)
         state.curr_pos.x++;
     else if(Input=='E') {
         if(state.main_array[state.curr_pos.y][state.curr_pos.x] == EMPTY_MARKER){
@@ -207,15 +206,46 @@ void getUserMove()
     }
 }
 
+start_game(){
+    system("cls");
 
+    //set initial state
+   fill_array(state.main_array, EMPTY_MARKER);
+    state.curr_player = 0;
+    state.curr_pos = {0, 0};
+    state.game_over = false;
 
-int main(){
+    //render board
     renderBoard();
+
+    //play game
     while(state.game_over == false)
     {
-        printArr();
         stateArray2Board();
         printMarkerOnBoard(getCurrMarker(state.curr_player), state.curr_pos.x, state.curr_pos.y);
         getUserMove();
     }
+
+    system("cls");
+}
+
+void main_menu(){
+    Menu _mainMenu({"2 players","Cpu vs player","setting","Exit"});
+    switch(_mainMenu.drawMenu()){
+    case 1:
+        start_game();
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    }
+}
+
+
+int main(){
+    init();
+    main_menu();
 }
